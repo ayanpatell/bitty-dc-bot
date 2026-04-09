@@ -11,14 +11,9 @@ export function formatDiscordMessage(sms: ParsedSms): DiscordWebhookPayload {
   return {
     embeds: [
       {
-        title: 'New SMS',
+        title: 'New Trade Alert',
         description: bodyBlock + mediaSection,
-        color: 0x5865f2, // Discord blurple
-        fields: [
-          { name: 'From', value: sms.from, inline: true },
-          { name: 'To', value: sms.to || '_unknown_', inline: true },
-        ],
-        footer: { text: `ID: ${sms.messageId}` },
+        color: 0x5865f2,
         timestamp: new Date().toISOString(),
       },
     ],

@@ -3,7 +3,9 @@ import { parseTelnyxPayload } from '../src/providers/telnyx/parser.js';
 import { formatDiscordMessage } from '../src/services/discord.js';
 import type { TelnyxWebhookEvent } from '../src/types/index.js';
 
-function makeEvent(overrides: Partial<TelnyxWebhookEvent['data']['payload']> = {}): TelnyxWebhookEvent {
+function makeEvent(
+  overrides: Partial<TelnyxWebhookEvent['data']['payload']> = {},
+): TelnyxWebhookEvent {
   return {
     data: {
       event_type: 'message.received',
@@ -91,7 +93,7 @@ describe('formatDiscordMessage', () => {
 
   it('produces an embed with the correct title', () => {
     const payload = formatDiscordMessage(baseSms);
-    expect(payload.embeds[0]?.title).toBe('New SMS');
+    expect(payload.embeds[0]?.title).toBe('New Trade Alert');
   });
 
   it('wraps the body in a code block', () => {
@@ -100,16 +102,15 @@ describe('formatDiscordMessage', () => {
     expect(payload.embeds[0]?.description).toContain('Hello world');
   });
 
-  it('includes From and To fields', () => {
+  it('does not include From/To fields or message ID', () => {
     const payload = formatDiscordMessage(baseSms);
-    const fields = payload.embeds[0]?.fields ?? [];
-    expect(fields.find((f) => f.name === 'From')?.value).toBe('+13125550001');
-    expect(fields.find((f) => f.name === 'To')?.value).toBe('+17735550002');
+    expect(payload.embeds[0]?.fields).toBeUndefined();
+    expect(payload.embeds[0]?.footer).toBeUndefined();
   });
 
-  it('includes messageId in footer', () => {
+  it('includes a timestamp', () => {
     const payload = formatDiscordMessage(baseSms);
-    expect(payload.embeds[0]?.footer.text).toContain('msg-id-123');
+    expect(typeof payload.embeds[0]?.timestamp).toBe('string');
   });
 
   it('appends media URLs when present', () => {
@@ -123,12 +124,5 @@ describe('formatDiscordMessage', () => {
     const sms = { ...baseSms, body: '' };
     const payload = formatDiscordMessage(sms);
     expect(payload.embeds[0]?.description).toContain('no text body');
-  });
-
-  it('shows unknown placeholder for empty to field', () => {
-    const sms = { ...baseSms, to: '' };
-    const payload = formatDiscordMessage(sms);
-    const toField = payload.embeds[0]?.fields.find((f) => f.name === 'To');
-    expect(toField?.value).toBe('_unknown_');
   });
 });
