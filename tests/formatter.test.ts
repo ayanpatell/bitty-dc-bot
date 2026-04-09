@@ -93,12 +93,17 @@ describe('formatDiscordMessage', () => {
 
   it('produces an embed with the correct title', () => {
     const payload = formatDiscordMessage(baseSms);
-    expect(payload.embeds[0]?.title).toBe('New Trade Alert');
+    expect(payload.embeds[0]?.title).toBe('🔔 New Trade Alert');
   });
 
-  it('wraps the body in a code block', () => {
+  it('includes @everyone content and allowed_mentions', () => {
     const payload = formatDiscordMessage(baseSms);
-    expect(payload.embeds[0]?.description).toContain('```');
+    expect(payload.content).toBe('@everyone');
+    expect(payload.allowed_mentions?.parse).toContain('everyone');
+  });
+
+  it('shows body text as plain description', () => {
+    const payload = formatDiscordMessage(baseSms);
     expect(payload.embeds[0]?.description).toContain('Hello world');
   });
 
@@ -106,6 +111,11 @@ describe('formatDiscordMessage', () => {
     const payload = formatDiscordMessage(baseSms);
     expect(payload.embeds[0]?.fields).toBeUndefined();
     expect(payload.embeds[0]?.footer).toBeUndefined();
+  });
+
+  it('uses green embed color', () => {
+    const payload = formatDiscordMessage(baseSms);
+    expect(payload.embeds[0]?.color).toBe(0x57f287);
   });
 
   it('includes a timestamp', () => {
@@ -123,6 +133,6 @@ describe('formatDiscordMessage', () => {
   it('shows fallback text for empty body', () => {
     const sms = { ...baseSms, body: '' };
     const payload = formatDiscordMessage(sms);
-    expect(payload.embeds[0]?.description).toContain('no text body');
+    expect(payload.embeds[0]?.description).toContain('no message body');
   });
 });

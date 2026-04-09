@@ -1,7 +1,7 @@
 import type { DiscordWebhookPayload, ParsedSms } from '../types/index.js';
 
 export function formatDiscordMessage(sms: ParsedSms): DiscordWebhookPayload {
-  const bodyBlock = sms.body.length > 0 ? `\`\`\`\n${sms.body}\n\`\`\`` : '_[no text body]_';
+  const body = sms.body.length > 0 ? sms.body : '_[no message body]_';
 
   const mediaSection =
     sms.mediaUrls.length > 0
@@ -9,11 +9,13 @@ export function formatDiscordMessage(sms: ParsedSms): DiscordWebhookPayload {
       : '';
 
   return {
+    content: '@everyone',
+    allowed_mentions: { parse: ['everyone'] },
     embeds: [
       {
-        title: 'New Trade Alert',
-        description: bodyBlock + mediaSection,
-        color: 0x5865f2,
+        title: '🔔 New Trade Alert',
+        description: body + mediaSection,
+        color: 0x57f287, // green
         timestamp: new Date().toISOString(),
       },
     ],

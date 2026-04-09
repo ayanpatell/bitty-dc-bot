@@ -25,6 +25,8 @@ export interface DiscordEmbed {
 }
 
 export interface DiscordWebhookPayload {
+  content?: string;
+  allowed_mentions?: { parse: string[] };
   embeds: DiscordEmbed[];
 }
 
