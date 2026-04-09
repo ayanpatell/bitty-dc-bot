@@ -6,8 +6,12 @@ import { logger } from './utils/logger.js';
 
 const app = createApp();
 
+// Log the raw PORT env var so Railway logs show exactly what port Node is binding to
+const rawPort = process.env['PORT'];
+logger.info({ PORT_env: rawPort, config_port: config.port }, 'Binding server...');
+
 const server = app.listen(config.port, () => {
-  logger.info({ port: config.port, env: config.nodeEnv }, 'Server started');
+  logger.info({ port: config.port, env: config.nodeEnv }, 'Server started and listening');
 });
 
 // Graceful shutdown — Render/Railway send SIGTERM before replacing the instance.
