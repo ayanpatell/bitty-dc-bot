@@ -1,7 +1,20 @@
+import { ACTION_CONFIG, classifyTradeMessage } from '../utils/classify.js';
 import type { DiscordWebhookPayload, ParsedSms } from '../types/index.js';
 
 export function formatDiscordMessage(sms: ParsedSms): DiscordWebhookPayload {
-  const body = sms.body.length > 0 ? sms.body : '_[no message body]_';
+  const action = classifyTradeMessage(sms.body);
+  const { color, emoji, label } = ACTION_CONFIG[action];
+
+  // Bold the first line, leave the rest as-is (messages are often multi-line)
+  const lines = sms.body.trim().split('\n').filter((l) => l.trim().length > 0);
+  const firstLine = lines[0] ?? '';
+  const rest = lines.slice(1).join('\n').trim();
+  const description =
+    sms.body.trim().length === 0
+      ? '_[no message body]_'
+      : rest.length > 0
+        ? `**${firstLine}**\n${rest}`
+        : `**${firstLine}**`;
 
   const mediaSection =
     sms.mediaUrls.length > 0
@@ -13,9 +26,9 @@ export function formatDiscordMessage(sms: ParsedSms): DiscordWebhookPayload {
     allowed_mentions: { parse: ['everyone'] },
     embeds: [
       {
-        title: '🔔 New Trade Alert',
-        description: body + mediaSection,
-        color: 0x57f287, // green
+        title: `${emoji} New Trade Alert — ${label}`,
+        description: description + mediaSection,
+        color,
         timestamp: new Date().toISOString(),
       },
     ],

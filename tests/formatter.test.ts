@@ -83,56 +83,70 @@ describe('parseTelnyxPayload', () => {
 });
 
 describe('formatDiscordMessage', () => {
-  const baseSms = {
+  const makeSms = (body: string) => ({
     from: '+13125550001',
     to: '+17735550002',
-    body: 'Hello world',
+    body,
     messageId: 'msg-id-123',
     mediaUrls: [],
-  };
-
-  it('produces an embed with the correct title', () => {
-    const payload = formatDiscordMessage(baseSms);
-    expect(payload.embeds[0]?.title).toBe('🔔 New Trade Alert');
   });
 
-  it('includes @everyone content and allowed_mentions', () => {
-    const payload = formatDiscordMessage(baseSms);
+  it('includes @everyone and allowed_mentions', () => {
+    const payload = formatDiscordMessage(makeSms('Open long 67110 SL risk normal'));
     expect(payload.content).toBe('@everyone');
     expect(payload.allowed_mentions?.parse).toContain('everyone');
   });
 
-  it('shows body text as plain description', () => {
-    const payload = formatDiscordMessage(baseSms);
-    expect(payload.embeds[0]?.description).toContain('Hello world');
-  });
-
-  it('does not include From/To fields or message ID', () => {
-    const payload = formatDiscordMessage(baseSms);
-    expect(payload.embeds[0]?.fields).toBeUndefined();
-    expect(payload.embeds[0]?.footer).toBeUndefined();
-  });
-
-  it('uses green embed color', () => {
-    const payload = formatDiscordMessage(baseSms);
+  it('classifies long entry — green, 📈', () => {
+    const payload = formatDiscordMessage(makeSms('Open long 67110 SL risk normal'));
     expect(payload.embeds[0]?.color).toBe(0x57f287);
+    expect(payload.embeds[0]?.title).toContain('📈');
+    expect(payload.embeds[0]?.title).toContain('Long Entry');
+  });
+
+  it('classifies short entry — red, 📉', () => {
+    const payload = formatDiscordMessage(makeSms('68100 sl shorts'));
+    expect(payload.embeds[0]?.color).toBe(0xed4245);
+    expect(payload.embeds[0]?.title).toContain('📉');
+  });
+
+  it('classifies close / take profit — yellow, 💰', () => {
+    const payload = formatDiscordMessage(makeSms('Close all'));
+    expect(payload.embeds[0]?.color).toBe(0xfee75c);
+    expect(payload.embeds[0]?.title).toContain('💰');
+  });
+
+  it('classifies SL update — orange, 🛡️', () => {
+    const payload = formatDiscordMessage(makeSms('Move sl to 66980'));
+    expect(payload.embeds[0]?.color).toBe(0xff9900);
+    expect(payload.embeds[0]?.title).toContain('🛡️');
+  });
+
+  it('classifies commentary — blurple, 💬', () => {
+    const payload = formatDiscordMessage(makeSms('Waiting for the daily to close'));
+    expect(payload.embeds[0]?.color).toBe(0x5865f2);
+    expect(payload.embeds[0]?.title).toContain('💬');
+  });
+
+  it('bolds the first line of a multi-line message', () => {
+    const payload = formatDiscordMessage(makeSms('Open long 67110\nSL risk normal'));
+    expect(payload.embeds[0]?.description).toContain('**Open long 67110**');
+    expect(payload.embeds[0]?.description).toContain('SL risk normal');
+  });
+
+  it('shows fallback text for empty body', () => {
+    const payload = formatDiscordMessage(makeSms(''));
+    expect(payload.embeds[0]?.description).toContain('no message body');
   });
 
   it('includes a timestamp', () => {
-    const payload = formatDiscordMessage(baseSms);
+    const payload = formatDiscordMessage(makeSms('Open long'));
     expect(typeof payload.embeds[0]?.timestamp).toBe('string');
   });
 
   it('appends media URLs when present', () => {
-    const sms = { ...baseSms, mediaUrls: ['https://example.com/photo.jpg'] };
+    const sms = { ...makeSms('Check this chart'), mediaUrls: ['https://example.com/chart.jpg'] };
     const payload = formatDiscordMessage(sms);
-    expect(payload.embeds[0]?.description).toContain('https://example.com/photo.jpg');
-    expect(payload.embeds[0]?.description).toContain('Media');
-  });
-
-  it('shows fallback text for empty body', () => {
-    const sms = { ...baseSms, body: '' };
-    const payload = formatDiscordMessage(sms);
-    expect(payload.embeds[0]?.description).toContain('no message body');
+    expect(payload.embeds[0]?.description).toContain('https://example.com/chart.jpg');
   });
 });
